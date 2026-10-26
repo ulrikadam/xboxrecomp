@@ -1313,6 +1313,23 @@ static void test_face_layout(void)
 
 /* The driving-controls choice is kept for the title's host code, and that
  * code can tell a controller's state from the keyboard's (BO-106). */
+/* Input > First controller: the port the first controller takes, and a
+ * change counted so the backend can free the ports already taken. */
+static void test_first_pad(void)
+{
+    unsigned g0 = xbox_InputFirstPadGeneration();
+
+    CHECK(xbox_InputFirstPadPort() == 0, "the default is player 1");
+    xbox_InputSetFirstPadPort(1);
+    CHECK(xbox_InputFirstPadPort() == 1, "player 2 is kept");
+    CHECK(xbox_InputFirstPadGeneration() == g0 + 1, "a change is counted");
+    xbox_InputSetFirstPadPort(1);
+    CHECK(xbox_InputFirstPadGeneration() == g0 + 1, "the same choice again is no change");
+    xbox_InputSetFirstPadPort(7);
+    CHECK(xbox_InputFirstPadPort() == 0, "anything else is player 1");
+    CHECK(xbox_InputFirstPadGeneration() == g0 + 2, "and counted");
+}
+
 static void test_control_scheme(void)
 {
     XBOX_INPUT_STATE st;
@@ -1368,6 +1385,7 @@ int main(int argc, char **argv)
     test_combo_guard();
     test_trigger_deadzone();
     test_face_layout();
+    test_first_pad();
     test_control_scheme();
     printf("input_map: %d checks, %d failed\n", g_checks, g_fail);
     return g_fail ? 1 : 0;

@@ -201,6 +201,7 @@ static const char *const n_scale[]     = { "1x (640x480)", "1.5x (960x720)", "2x
 #endif
 static const char *const n_face[]      = { "Xbox layout", "Nintendo layout", NULL };
 static const char *const n_scheme[]    = { "Xbox layout", "PS2 layout", NULL };
+static const char *const n_first_pad[] = { "Player 1", "Player 2", NULL };
 static const char *const n_ui_scale[]  = { "Off", "2x", "4x", NULL };
 static const char *const n_texup[]     = { "Off", "FSRCNNX", "NNEDI3", NULL };
 static const char *const n_texup_sc[]  = { "2x", "4x", NULL };
@@ -246,6 +247,7 @@ static constexpr Meta k_meta[XS_COUNT] = {
     /* XS_INPUT_RUMBLE */       { XS_INPUT_RUMBLE, "Rumble strength", "1.0 is the original Xbox rumble. Higher strengthens the weaker rumbles; the strongest stays at full. 0 turns rumble off.", 0.25, FMT_GAIN, NULL, 0 },
     /* XS_INPUT_FACE_LAYOUT */  { XS_INPUT_FACE_LAYOUT, "Face buttons", "Nintendo layout is for pads with A on the right and B below. It swaps A with B and X with Y, in the game and here.", 1, FMT_PLAIN, n_face, 0 },
     /* XS_INPUT_CONTROL_SCHEME */ { XS_INPUT_CONTROL_SCHEME, "Driving controls", "PS2 layout uses the PlayStation 2 version's driving controls: accelerate on the bottom face button, brake on the left one, boost on the right shoulder, look back on the left shoulder. Applies only while driving.", 1, FMT_PLAIN, n_scheme, 0 },
+    /* XS_INPUT_FIRST_PAD */    { XS_INPUT_FIRST_PAD, "First controller", "Player 1: the first controller to press a button is player 1, and the keyboard drives the same player. Player 2: the keyboard is player 1 alone and controllers start at player 2, so a keyboard and a controller can play split screen. Press a button on each controller after a change.", 1, FMT_PLAIN, n_first_pad, 0 },
     /* XS_POWER_MODE */         { XS_POWER_MODE, "Power mode", "Maximum busy-waits throughout (steadiest, hottest). Balanced sleeps, then spins for the last 8 ms of each frame (steady 60). Battery saver only sleeps (coolest, with an occasional small dip). Auto picks the spin as it goes: less while frames are steady, more when they come late.", 1, FMT_PLAIN, n_power, 0 },
     /* XS_ADVANCED_PERF */      { XS_ADVANCED_PERF, "Performance overlay", "FPS and frame-time graph in the corner. Greetings to the DF team!", 1, FMT_PLAIN, NULL, 0 },
     /* XS_GAME_SPEED_UNITS */   { XS_GAME_SPEED_UNITS, "Speed units", "Speed and distance in km/h and metres instead of mph and miles, using the game's own metric display. Applies from the next race. Text stays English.", 1, FMT_PLAIN, n_units, 0 },
@@ -1203,6 +1205,9 @@ static int page_rows(int page, Row *r)
         SET(XS_INPUT_FACE_LAYOUT);
         if (xbox_InputControlSchemeOffered())
             SET(XS_INPUT_CONTROL_SCHEME);
+#if !defined(__ANDROID__)
+        SET(XS_INPUT_FIRST_PAD);
+#endif
         SET(XS_INPUT_GLYPHS);
 #if defined(__ANDROID__)
         SET(XS_INPUT_VIBRATION);

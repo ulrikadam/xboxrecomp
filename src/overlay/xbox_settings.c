@@ -61,6 +61,7 @@ static const char *const k_aa[]       = { "off", "fxaa", "smaa", NULL };
 static const char *const k_units[]    = { "mph", "kmh", NULL };
 static const char *const k_face[]     = { "xbox", "nintendo", NULL };
 static const char *const k_scheme[]   = { "xbox", "ps2", NULL };
+static const char *const k_first_pad[] = { "player1", "player2", NULL };
 static const char *const k_glyphs[]   = { "auto", "xbox", "xbox_modern", "playstation", "playstation5", "nintendo", "steam", "positional", "keyboard", NULL };
 _Static_assert(sizeof k_glyphs / sizeof k_glyphs[0] == XBOX_GLYPHS_MODE_COUNT + 1, "one choice per glyph mode, in pad_glyphs.h order");
 #if defined(__ANDROID__)
@@ -121,6 +122,7 @@ static xs_setting s_set[XS_COUNT] = {
     [XS_INPUT_RUMBLE]       = SETTING_STEP("input.rumble", XS_FLOAT, 0, RENV_INPUT_RUMBLE_GAIN, 0, 3, 1, 0.25),
     [XS_INPUT_FACE_LAYOUT]  = SETTING("input.face_layout", XS_CHOICE, 0, RENV_INPUT_FACE_LAYOUT, k_face, NULL, 0, 0, 0),
     [XS_INPUT_CONTROL_SCHEME] = SETTING("input.control_scheme", XS_CHOICE, 0, RENV_INPUT_CONTROL_SCHEME, k_scheme, NULL, 0, 0, 0),
+    [XS_INPUT_FIRST_PAD]    = SETTING("input.first_pad", XS_CHOICE, 0, RENV_INPUT_FIRST_PAD, k_first_pad, NULL, 0, 0, 0),
     [XS_POWER_MODE]         = SETTING("power.mode", XS_CHOICE, XS_VIRTUAL, RENV_COUNT, k_power, NULL, 0, 0, 0),
     [XS_ADVANCED_PERF]      = SETTING("advanced.perf_overlay", XS_BOOL, 0, RENV_OVERLAY_PERF, NULL, NULL, 0, 0, 0),
     [XS_GAME_SPEED_UNITS]   = SETTING("game.speed_units", XS_CHOICE, 0, RENV_SPEED_UNITS, k_units, NULL, 0, 0, 0),
@@ -552,6 +554,9 @@ static void apply(xs_id id)
         break;
     case XS_INPUT_CONTROL_SCHEME:
         xbox_InputSetControlScheme((int)v);
+        break;
+    case XS_INPUT_FIRST_PAD:
+        xbox_InputSetFirstPadPort((int)v);
         break;
 #if defined(__ANDROID__)
     case XS_INPUT_TOUCH:
@@ -995,6 +1000,7 @@ void xbox_SettingsFinish(void)
     xbox_InputSetRumbleStrength(s_set[XS_INPUT_RUMBLE].value);
     xbox_InputSetFaceLayoutNintendo(s_set[XS_INPUT_FACE_LAYOUT].value != 0.0);
     xbox_InputSetControlScheme((int)s_set[XS_INPUT_CONTROL_SCHEME].value);
+    xbox_InputSetFirstPadPort((int)s_set[XS_INPUT_FIRST_PAD].value);
     xbox_InputSetGlyphMode((int)s_set[XS_INPUT_GLYPHS].value);
 #if defined(__ANDROID__)
     apply_touch();

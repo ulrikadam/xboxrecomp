@@ -39,7 +39,12 @@ static DWORD xi_get_state(DWORD port, XBOX_INPUT_STATE *out)
 {
     XINPUT_STATE xi;
     XBOX_HOST_XINPUT_GAMEPAD pad;
-    DWORD rc = XInputGetState(port, &xi);
+    DWORD rc;
+
+    /* Input > First controller: player 2 leaves port 0 to the keyboard. */
+    if (port < (DWORD)xbox_InputFirstPadPort())
+        return ERROR_DEVICE_NOT_CONNECTED;
+    rc = XInputGetState(port - xbox_InputFirstPadPort(), &xi);
 
     if (rc != ERROR_SUCCESS)
         return rc;
@@ -62,7 +67,9 @@ static DWORD xi_set_state(DWORD port, const XBOX_VIBRATION *v)
     XINPUT_VIBRATION xv;
     xv.wLeftMotorSpeed  = v->wLeftMotorSpeed;
     xv.wRightMotorSpeed = v->wRightMotorSpeed;
-    return XInputSetState(port, &xv);
+    if (port < (DWORD)xbox_InputFirstPadPort())
+        return ERROR_DEVICE_NOT_CONNECTED;
+    return XInputSetState(port - xbox_InputFirstPadPort(), &xv);
 }
 
 static uint64_t xi_now_ms(void) { return GetTickCount64(); }
@@ -273,8 +280,35 @@ static void pad_open_index(int i)
     XR_NOTICE( "[INPUT] controller %s opened; it gets a port at its first input\n", d);
 }
 
+/* Window thread: Input > First controller changed, so every controller gives
+ * its port back and takes one again at its next button press. */
+static unsigned g_first_pad_gen;
+
+static void pad_reassign(void)
+{
+    unsigned gen = xbox_InputFirstPadGeneration();
+    int freed;
+
+    if (gen == g_first_pad_gen)
+        return;
+    g_first_pad_gen = gen;
+    freed = 0;
+    pthread_mutex_lock(&g_pads_lock);
+    for (int k = 0; k < PAD_OPEN_MAX; k++)
+        if (g_open[k].c && g_open[k].port >= 0) {
+            g_pads[g_open[k].port] = NULL;
+            g_open[k].port = -1;
+            freed++;
+        }
+    pthread_mutex_unlock(&g_pads_lock);
+    if (freed)
+        fprintf(stderr, "[INPUT] first controller is player %d now; ports taken again at the next press\n",
+            xbox_InputFirstPadPort() + 1);
+}
+
 /* Window thread: the lowest free port for the controller with this
- * instance id, if it has none yet. */
+ * instance id, if it has none yet (from player 2 with Input > First
+ * controller at Player 2). */
 static void pad_claim(SDL_JoystickID id)
 {
     char d[160];
@@ -283,7 +317,7 @@ static void pad_claim(SDL_JoystickID id)
         if (!g_open[k].c || g_open[k].id != id || g_open[k].port >= 0)
             continue;
         pthread_mutex_lock(&g_pads_lock);
-        for (int p = 0; p < XBOX_MAX_CONTROLLERS; p++) {
+        for (int p = xbox_InputFirstPadPort(); p < XBOX_MAX_CONTROLLERS; p++) {
             if (!g_pads[p]) {
                 g_pads[p] = g_open[k].c;
                 g_open[k].port = p;
@@ -324,6 +358,7 @@ void xbox_InputPadEvent(const SDL_Event *ev)
         }
         break;
     case SDL_CONTROLLERBUTTONDOWN:
+        pad_reassign();
         pad_claim(ev->cbutton.which);
         for (int k = 0; k < PAD_OPEN_MAX; k++)
             if (g_open[k].c && g_open[k].id == ev->cbutton.which)
@@ -362,7 +397,7 @@ void xbox_InputPadEvent(const SDL_Event *ev)
  * device order, on the pad thread (nothing else uses SDL then). */
 static void open_controllers(void)
 {
-    int slot = 0;
+    int slot = xbox_InputFirstPadPort();
     if (g_pads_closed)
         return;
     for (int i = 0; i < SDL_NumJoysticks() && slot < XBOX_MAX_CONTROLLERS; i++) {

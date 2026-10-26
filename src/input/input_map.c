@@ -145,6 +145,20 @@ int  xbox_InputControlScheme(void)          { return s_control_scheme; }
 void xbox_InputOfferControlScheme(int on)   { s_control_scheme_offered = on != 0; }
 int  xbox_InputControlSchemeOffered(void)   { return s_control_scheme_offered; }
 
+static volatile int s_first_pad_port;
+static volatile unsigned s_first_pad_gen;
+
+void xbox_InputSetFirstPadPort(int port)
+{
+    int p = port == 1 ? 1 : 0;
+    if (p != s_first_pad_port) {
+        s_first_pad_port = p;
+        s_first_pad_gen++;
+    }
+}
+int      xbox_InputFirstPadPort(void)       { return s_first_pad_port; }
+unsigned xbox_InputFirstPadGeneration(void) { return s_first_pad_gen; }
+
 void xbox_InputMirrorFaceXInput(XBOX_HOST_XINPUT_GAMEPAD *pad)
 {
     uint16_t b = pad->wButtons, o = (uint16_t)(b & ~(XBOX_XI_A | XBOX_XI_B | XBOX_XI_X | XBOX_XI_Y));

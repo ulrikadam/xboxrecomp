@@ -138,6 +138,16 @@ int  xbox_InputControlScheme(void);
 void xbox_InputOfferControlScheme(int on);
 int  xbox_InputControlSchemeOffered(void);
 
+/* The first controller's player (input.first_pad, the overlay's Input page):
+ * 0, the default, gives controllers ports from player 1 up, where the
+ * keyboard (port 0) adds to the first one; 1 keeps port 0 for the keyboard
+ * alone and gives controllers ports from player 2 up, so a keyboard and a
+ * controller are two players. A change frees every controller's port, and
+ * each takes one again at its next button press. Any thread. */
+void xbox_InputSetFirstPadPort(int port);
+int  xbox_InputFirstPadPort(void);
+unsigned xbox_InputFirstPadGeneration(void);
+
 void xbox_InputMapXInput(const XBOX_HOST_XINPUT_GAMEPAD *in, XBOX_GAMEPAD *out);
 void xbox_InputMapSdl(const XBOX_HOST_SDL_GAMEPAD *in, XBOX_GAMEPAD *out);
 

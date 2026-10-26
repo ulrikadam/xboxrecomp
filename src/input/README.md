@@ -220,6 +220,17 @@ test.
 | D or Right arrow | Left stick right |
 <!-- keyboard_map:end -->
 
+## The first controller's player
+
+`input.first_pad` (settings.toml, the overlay's Input page as "First
+controller", `RECOMP_INPUT_FIRST_PAD=player1|player2`; not on Android).
+`player1`, the default: a controller takes the lowest free port at its first
+button press, so the first one is player 1 and the keyboard adds to it on
+port 0. `player2`: port 0 is the keyboard's alone and controllers take ports
+from 1 up, so a keyboard and a controller are two players (split screen).
+The XInput backend reads host pad `port - 1` then. A change frees the ports
+already taken; each controller takes one again at its next button press.
+
 ## A title's second control scheme
 
 `input.control_scheme` (settings.toml, the overlay's Input page as "Driving
